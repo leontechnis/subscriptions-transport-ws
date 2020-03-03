@@ -24,7 +24,7 @@ import {
 
 import { PubSub, withFilter } from 'graphql-subscriptions';
 
-import MessageTypes  from '../message-types';
+import MessageTypes from '../message-types';
 
 import {
   GRAPHQL_SUBSCRIPTIONS,
@@ -328,7 +328,7 @@ describe('Client', function () {
         }
         if (parsedMessage.type === MessageTypes.GQL_START) {
           expect(initReceived).to.be.true;
-          if ( sub ) {
+          if (sub) {
             sub.unsubscribe();
             done();
           } else {
@@ -366,6 +366,20 @@ describe('Client', function () {
 
     const unregister = client.onDisconnected(() => {
       unregister();
+      done();
+    });
+  });
+
+  it('should get websocket close event as argument on disconnect', (done) => {
+    const client = new SubscriptionClient(`ws://localhost:${TEST_PORT}/`, {
+      connectionCallback: () => {
+        client.client.close();
+      },
+    });
+
+    const unregister = client.onDisconnected((event) => {
+      unregister();
+      expect(event).to.exist;
       done();
     });
   });
@@ -464,37 +478,37 @@ describe('Client', function () {
     const client = new SubscriptionClient(`ws://localhost:${TEST_PORT}/`);
 
     client.request({
-        query: undefined,
-        operationName: 'useInfo',
-        variables: {
-          id: 3,
-        },
-      }).subscribe({
-        next: () => assert(false),
-        error: (error) => {
-          client.close();
-          expect(error.message).to.be.equal('Must provide a query.');
-          done();
-        },
-      });
+      query: undefined,
+      operationName: 'useInfo',
+      variables: {
+        id: 3,
+      },
+    }).subscribe({
+      next: () => assert(false),
+      error: (error) => {
+        client.close();
+        expect(error.message).to.be.equal('Must provide a query.');
+        done();
+      },
+    });
   });
 
   it('should throw an exception when query is not valid', (done) => {
     const client = new SubscriptionClient(`ws://localhost:${TEST_PORT}/`);
 
     client.request({
-        query: <string>{},
-        operationName: 'useInfo',
-        variables: {
-          id: 3,
-        },
-      }).subscribe({
-        next: () => assert(false),
-        error: () => {
-          client.close();
-          done();
-        },
-      });
+      query: <string>{},
+      operationName: 'useInfo',
+      variables: {
+        id: 3,
+      },
+    }).subscribe({
+      next: () => assert(false),
+      error: () => {
+        client.close();
+        done();
+      },
+    });
   });
 
   it('should allow both data and errors on GQL_DATA', (done) => {
@@ -639,38 +653,38 @@ describe('Client', function () {
       },
     };
     let spyApplyMiddlewareFunction = sinon.spy(middleware, 'applyMiddleware');
-    client3.use([ middleware ]);
+    client3.use([middleware]);
 
     client3.request({
-        query: `subscription useInfo($id: String) {
+      query: `subscription useInfo($id: String) {
             user(id: $id) {
               id
               name
             }
           }`,
-        operationName: 'useInfo',
-        variables: {
-          id: '3',
-        },
-      }).subscribe({
-        next: (result: any) => {
-          try {
-            client3.unsubscribeAll();
-            if (result.errors) {
-              assert(false, 'got error during subscription creation');
-            }
-
-            if (result.data) {
-              assert.equal(spyApplyMiddlewareFunction.called, true);
-              assert.equal(spyApplyMiddlewareAsyncContents.called, true);
-            }
-            done();
-          } catch (e) {
-            done(e);
+      operationName: 'useInfo',
+      variables: {
+        id: '3',
+      },
+    }).subscribe({
+      next: (result: any) => {
+        try {
+          client3.unsubscribeAll();
+          if (result.errors) {
+            assert(false, 'got error during subscription creation');
           }
-        },
-        error: (e) => done(e),
-      });
+
+          if (result.data) {
+            assert.equal(spyApplyMiddlewareFunction.called, true);
+            assert.equal(spyApplyMiddlewareAsyncContents.called, true);
+          }
+          done();
+        } catch (e) {
+          done(e);
+        }
+      },
+      error: (e) => done(e),
+    });
 
     setTimeout(() => {
       testPubsub.publish('user', {});
@@ -771,17 +785,17 @@ describe('Client', function () {
     const client = new SubscriptionClient(`ws://localhost:${TEST_PORT}/`);
 
     let sub = client.request({
-        query: `subscription useInfo($id: String) {
+      query: `subscription useInfo($id: String) {
         user(id: $id) {
           id
           name
         }
       }`,
-        operationName: 'useInfo',
-        variables: {
-          id: 3,
-        },
-      }).subscribe({});
+      operationName: 'useInfo',
+      variables: {
+        id: 3,
+      },
+    }).subscribe({});
 
     client.onConnecting(() => {
       expect((client as any).unsentMessagesQueue.length).to.equals(1);
@@ -799,10 +813,10 @@ describe('Client', function () {
 
     setTimeout(() => {
       client.request({
-          query: `subscription useInfo{
+        query: `subscription useInfo{
           error
         }`,
-          variables: {},
+        variables: {},
       }).subscribe({
         next: (result: any) => {
           if (result.errors.length) {
@@ -829,10 +843,10 @@ describe('Client', function () {
 
     setTimeout(() => {
       client.request({
-          query: `subscription useInfo{
+        query: `subscription useInfo{
           invalid
         }`,
-          variables: {},
+        variables: {},
       }).subscribe({
         next: (result: any) => {
           if (result.errors.length) {
@@ -884,19 +898,19 @@ describe('Client', function () {
     expect(client.client).to.be.null;
 
     let sub = client.request({
-        query: `subscription useInfo($id: String) {
+      query: `subscription useInfo($id: String) {
         user(id: $id) {
           id
           name
         }
       }`,
-        operationName: 'useInfo',
-        variables: {
-          id: 3,
-        },
-      }).subscribe({
-        error: (e) => done(e),
-      });
+      operationName: 'useInfo',
+      variables: {
+        id: 3,
+      },
+    }).subscribe({
+      error: (e) => done(e),
+    });
 
     let isDone = false;
 
@@ -935,7 +949,7 @@ describe('Client', function () {
           isDone = true;
           try {
             const parsedMessage = JSON.parse(message);
-            if ( sub ) {
+            if (sub) {
               sub.unsubscribe();
             }
             expect(parsedMessage.payload).to.eql({
@@ -950,17 +964,17 @@ describe('Client', function () {
     });
 
     sub = client.request({
-        query: `subscription useInfo($id: String) {
+      query: `subscription useInfo($id: String) {
         user(id: $id) {
           id
           name
         }
       }`,
-        operationName: 'useInfo',
-        variables: {
-          id: 3,
-        },
-      }).subscribe({});
+      operationName: 'useInfo',
+      variables: {
+        id: 3,
+      },
+    }).subscribe({});
   });
 
 
@@ -1437,12 +1451,12 @@ describe('Server', function () {
         variables: {},
       }).subscribe({
         next: (res) => {
-          if ( res.errors ) {
+          if (res.errors) {
             assert(false, 'unexpected error from request');
           }
 
           expect(res.data).to.deep.equal({ testString: 'value' });
-          msgCnt ++;
+          msgCnt++;
         },
         error: (err) => {
           assert(false, 'unexpected error from request');
@@ -1475,12 +1489,12 @@ describe('Server', function () {
         variables: {},
       }).subscribe({
         next: (res) => {
-          if ( res.errors ) {
+          if (res.errors) {
             assert(false, 'unexpected error from request');
           }
 
           expect(res.data).to.deep.equal({ testString: 'value' });
-          msgCnt ++;
+          msgCnt++;
         },
         error: (err) => {
           assert(false, 'unexpected error from request');
@@ -1556,7 +1570,7 @@ describe('Server', function () {
           done(new Error('unexpected error from subscribe'));
         },
         complete: () => {
-          if ( false === hasValue ) {
+          if (false === hasValue) {
             return done(new Error('No value recived from observable'));
           }
           done();
@@ -1755,17 +1769,17 @@ describe('Server', function () {
     const spy = sinon.spy(eventsServer as any, 'unsubscribe');
 
     client.request({
-        query: `subscription useInfo($id: String) {
+      query: `subscription useInfo($id: String) {
         user(id: $id) {
           id
           name
         }
       }`,
-        operationName: 'useInfo',
-        variables: {
-          id: '3',
-        },
-      }).subscribe({});
+      operationName: 'useInfo',
+      variables: {
+        id: '3',
+      },
+    }).subscribe({});
 
     setTimeout(() => {
       client.client.close();
@@ -1962,57 +1976,57 @@ describe('Server', function () {
     const client4 = new SubscriptionClient(`ws://localhost:${TEST_PORT}/`);
     setTimeout(() => {
       client3.request({
-          query: `subscription userInfoFilter1($id: String) {
+        query: `subscription userInfoFilter1($id: String) {
             userFiltered(id: $id) {
               id
               name
             }
           }`,
-          operationName: 'userInfoFilter1',
-          variables: {
-            id: '3',
-          },
-        }).subscribe({
-          next: (result: any) => {
-            if (result.errors) {
-              assert(false);
-            }
+        operationName: 'userInfoFilter1',
+        variables: {
+          id: '3',
+        },
+      }).subscribe({
+        next: (result: any) => {
+          if (result.errors) {
+            assert(false);
+          }
 
-            if (result.data) {
-              numTriggers += 1;
-              assert.property(result.data, 'userFiltered');
-              assert.equal(result.data.userFiltered.id, '3');
-              assert.equal(result.data.userFiltered.name, 'Jessie');
-            }
-            // both null means it's a SUBSCRIPTION_SUCCESS message
-          },
-        });
+          if (result.data) {
+            numTriggers += 1;
+            assert.property(result.data, 'userFiltered');
+            assert.equal(result.data.userFiltered.id, '3');
+            assert.equal(result.data.userFiltered.name, 'Jessie');
+          }
+          // both null means it's a SUBSCRIPTION_SUCCESS message
+        },
+      });
 
       client4.request({
-          query: `subscription userInfoFilter1($id: String) {
+        query: `subscription userInfoFilter1($id: String) {
             userFiltered(id: $id) {
               id
               name
             }
           }`,
-          operationName: 'userInfoFilter1',
-          variables: {
-            id: '1',
-          },
-        }).subscribe({
-          next: (result: any) => {
-            if (result.errors) {
-              assert(false);
-            }
-            if (result.data) {
-              numTriggers += 1;
-              assert.property(result.data, 'userFiltered');
-              assert.equal(result.data.userFiltered.id, '1');
-              assert.equal(result.data.userFiltered.name, 'Dan');
-            }
-            // both null means SUBSCRIPTION_SUCCESS
-          },
-        });
+        operationName: 'userInfoFilter1',
+        variables: {
+          id: '1',
+        },
+      }).subscribe({
+        next: (result: any) => {
+          if (result.errors) {
+            assert(false);
+          }
+          if (result.data) {
+            numTriggers += 1;
+            assert.property(result.data, 'userFiltered');
+            assert.equal(result.data.userFiltered.id, '1');
+            assert.equal(result.data.userFiltered.name, 'Dan');
+          }
+          // both null means SUBSCRIPTION_SUCCESS
+        },
+      });
     }, 100);
     setTimeout(() => {
       testPubsub.publish('userFiltered', { id: 1 });
@@ -2029,11 +2043,11 @@ describe('Server', function () {
     const CTX = 'testContext';
     const client3 = new SubscriptionClient(`ws://localhost:${TEST_PORT}/`);
     client3.request({
-        query: `subscription context {
+      query: `subscription context {
           context
         }`,
-        variables: {},
-        context: CTX,
+      variables: {},
+      context: CTX,
     }).subscribe({
       next: (result: any) => {
         client3.unsubscribeAll();
@@ -2629,37 +2643,37 @@ describe('Client<->Server Flow', () => {
     );
 
     let numTriggers = 0;
-        client.request({
-            query: `
+    client.request({
+      query: `
             subscription userInfoFilter1($id: String) {
               userFiltered(id: $id) {
                 id
                 name
               }
             }`,
-            operationName: 'userInfoFilter1',
-            variables: {
-                id: '3',
-            },
-        }).subscribe({
-            next: (result: any) => {
-                if (result.errors) {
-                    assert(false);
-                }
+      operationName: 'userInfoFilter1',
+      variables: {
+        id: '3',
+      },
+    }).subscribe({
+      next: (result: any) => {
+        if (result.errors) {
+          assert(false);
+        }
 
-                if (result.data) {
-                    numTriggers += 1;
-                    assert.property(result.data, 'userFiltered');
-                    assert.equal(result.data.userFiltered.id, '3');
-                    assert.equal(result.data.userFiltered.name, 'Jessie');
-                }
-            },
-        });
+        if (result.data) {
+          numTriggers += 1;
+          assert.property(result.data, 'userFiltered');
+          assert.equal(result.data.userFiltered.id, '3');
+          assert.equal(result.data.userFiltered.name, 'Jessie');
+        }
+      },
+    });
 
     setTimeout(() => {
-      testPubsub.publish('userFiltered', {id: 1});
-      testPubsub.publish('userFiltered', {id: 2});
-      testPubsub.publish('userFiltered', {id: 3});
+      testPubsub.publish('userFiltered', { id: 1 });
+      testPubsub.publish('userFiltered', { id: 2 });
+      testPubsub.publish('userFiltered', { id: 3 });
     }, 50);
 
     setTimeout(() => {
